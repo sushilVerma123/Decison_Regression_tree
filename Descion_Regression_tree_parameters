@@ -1,0 +1,83 @@
+import matplotlib.pyplot as plt
+import streamlit as st
+import pandas as pd
+import numpy as np
+from sklearn.model_selection import train_test_split
+from sklearn.tree import DecisionTreeRegressor
+from sklearn.metrics import r2_score
+
+
+def load_initial_graph(dataset, ax):
+    X = dataset.iloc[:, 0:13]
+    Y = dataset.iloc[:, 13]
+    return X, Y
+
+
+def draw_meshgrid():
+    a = np.arange(start=X[:, 0].min() - 1, stop=X[:, 0].max() + 1, step=0.01)
+    b = np.arange(start=X[:, 1].min() - 1, stop=X[:, 1].max() + 1, step=0.01)
+
+    XX, YY = np.meshgrid(a, b)
+
+    input_array = np.array([XX.ravel(), YY.ravel()]).T
+
+    return XX, YY, input_array
+
+
+plt.style.use('fivethirtyeight')
+
+st.sidebar.markdown("# Decision_Regression_Tree")
+
+dataset = st.sidebar.selectbox('Select Dataset', ('Binary', 'Multiclass'))
+
+criterion = st.sidebar.selectbox(
+    'quality of a split',
+    ('squared_error', 'friedman_mse', 'absolute_error', 'poisson'))
+splitter = st.sidebar.selectbox('choose the split at each node',
+                                ('best', 'random'))
+
+max_depth = int(st.sidebar.number_input('max_depth', value=0))
+
+min_samples_split = int(st.sidebar.slider('min_samples_split', 0, 150))
+min_samples_leaf = int(st.sidebar.slider('min_samples_leaf', 0, 150))
+
+max_leaf_nodes = int(st.sidebar.number_input('max_leaf_node', value=0))
+min_impurity_decrease = int(
+    st.sidebar.number_input('Max Iterations', value=0.0))
+
+# Load initial graph
+fig, ax = plt.subplots()
+
+dataset = pd.read_csv(
+    'https://raw.githubusercontent.com/selva86/datasets/refs/heads/master/BostonHousing.csv'
+)
+
+# Plot initial graph
+X, y = load_initial_graph(dataset, ax)
+X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=42)
+orig = st.pyplot(fig)
+
+if st.sidebar.button('Run Algorithm'):
+    orig.empty()
+
+    clf = DecisionTreeRegressor(
+        criterion='squared_error',
+        splitter='best',
+        max_depth=None,
+        min_samples_split=2,
+        min_samples_leaf=1,
+        max_leaf_nodes=None,
+        min_impurity_decrease=0.0,
+    )
+    clf.fit(X_train, y_train)
+
+    y_pred = clf.predict(X_test)
+
+    # XX, YY, input_array = draw_meshgrid()
+    # labels = clf.predict(input_array)
+
+    # ax.contourf(XX, YY, labels.reshape(XX.shape), alpha=0.5, cmap='rainbow')
+    # plt.xlabel("Col1")
+    # plt.ylabel("Col2")
+    # orig = st.pyplot(fig)
+    st.subheader("Accuracy for Decision Tree  " + str(round(r2_score(y_test, y_pred), 2)))
